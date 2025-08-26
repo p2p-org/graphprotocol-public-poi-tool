@@ -1,0 +1,24 @@
+[tool.ariadne-codegen]
+remote_schema_url = "https://gateway.thegraph.com/api/subgraphs/id/4KFYqUWRTZQ9gn7GPHC6YQ2q15chJfVrX43ezYcwkgxB"
+remote_schema_headers = {"Authorization" = "$GATEWAY_AUTH_HEADER"}
+queries_path = "codegen/ebo/queries"
+target_package_path = "graph_poitool/clients"
+target_package_name = "ebo"
+client_name = "EBOClient"
+plugins = [
+    "ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin",
+]
+include_all_inputs = false
+include_all_enums = false
+async_client = false
+opentelemetry_client = false
+base_client_name = "BaseClient"
+base_client_file_path = "codegen/base/base_client.py"
+#files_to_include = ["codegen/ebo/mixins.py"]
+
+
+[tool.ariadne-codegen.scalars.BigInt]
+type = "int"
+
+[tool.ariadne-codegen.scalars.BigDecimal]
+type = "decimal.decimal"

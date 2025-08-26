@@ -1,0 +1,26 @@
+[project]
+name = "graph-poitool"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "P2P.ORG",email = "devops.graph@p2p.org"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "httpx (>=0.28.1,<0.29.0)",
+    "pydantic (>=2.11.7,<3.0.0)",
+    "click (>=8.2.1,<9.0.0)",
+    "structlog (>=25.4.0,<26.0.0)",
+    "rich (>=14.1.0,<15.0.0)"
+]
+
+[project.scripts]
+poitool = 'graph_poitool.app:cli'
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ariadne-codegen = "^0.14.0"

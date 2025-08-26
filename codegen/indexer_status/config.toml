@@ -1,0 +1,22 @@
+[tool.ariadne-codegen]
+schema_path = "codegen/indexer_status/schema.graphql"
+queries_path = "codegen/indexer_status/queries"
+target_package_path = "graph_poitool/clients"
+target_package_name = "indexer_status"
+client_name = "IndexerStatusClient"
+plugins = [
+    "ariadne_codegen.contrib.shorter_results.ShorterResultsPlugin",
+]
+include_all_inputs = false
+include_all_enums = false
+async_client = false
+opentelemetry_client = false
+base_client_name = "BaseClient"
+base_client_file_path = "codegen/base/base_client.py"
+files_to_include = ["codegen/indexer_status/mixins.py"]
+
+[tool.ariadne-codegen.scalars.BigInt]
+type = "int"
+
+[tool.ariadne-codegen.scalars.BigDecimal]
+type = "decimal.decimal"
