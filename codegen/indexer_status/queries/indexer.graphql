@@ -1,0 +1,91 @@
+query PublicPOI($deployment_id: String!, $block_number: BigInt!) {
+  publicProofsOfIndexing(
+    requests: [{ deployment: $deployment_id, blockNumber: $block_number }]
+  ) {
+    deployment
+    proofOfIndexing
+    block {
+      hash
+      number
+    }
+  }
+}
+
+query SyncedSubgraphs {
+    indexingStatuses(subgraphs: []) @mixin(from: ".mixins", import: "LatestBlockMixin") {
+        subgraph
+        health
+        entityCount
+        fatalError {
+          message
+          deterministic
+        }
+        chains {
+            network
+            chainHeadBlock {
+                hash
+                number
+            }
+            latestBlock {
+                hash
+                number
+            }
+        }
+    }
+}
+
+query SubgraphStatus($deployment_id: String!) {
+    indexingStatuses(subgraphs: [$deployment_id]) @mixin(from: ".mixins", import: "LatestBlockMixin") {
+        subgraph
+        health
+        entityCount
+        fatalError {
+          message
+          deterministic
+        }
+        chains {
+            network
+            chainHeadBlock {
+                hash
+                number
+            }
+            latestBlock {
+                hash
+                number
+            }
+        }
+    }
+}
+
+query EntityChanges($deployment_id: String!, $block_number: Int!) {
+  entityChangesInBlock(subgraphId: $deployment_id, blockNumber: $block_number) {
+    updates {
+      type
+      entities
+    }
+    deletions {
+      type
+      entities
+    }
+  }
+}
+
+query BlockHash($network: String!, $block_number: Int!) {
+  blockHashFromNumber(network: $network, blockNumber: $block_number)
+}
+
+query BlockData($network: String!, $block_hash: Bytes!) {
+  blockData(network: $network, blockHash: $block_hash)
+}
+
+query CachedEthereumCalls($network: String!, $block_hash: Bytes!) {
+  cachedEthereumCalls(network: $network, blockHash: $block_hash) {
+    idHash
+    block {
+      hash
+      number
+    }
+    contractAddress
+    returnValue
+  }
+}
