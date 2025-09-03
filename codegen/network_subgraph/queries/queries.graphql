@@ -1,0 +1,23 @@
+query Indexer ($indexer_id: ID!) {
+  indexer(id: $indexer_id) @mixin(from: ".mixins", import: "IndexerMixin") {
+    id
+    url
+  }
+}
+
+query Manifest($deployment_id: ID!) {
+  subgraphDeploymentManifest(id: $deployment_id) {
+    startBlock
+    network
+  }
+}
+
+query SubgraphAllocations($deployment_id: String = "") {
+  allocations(where: {status: Active, subgraphDeployment_: {ipfsHash: $deployment_id}}) {
+    id
+    indexer @mixin(from: ".mixins", import: "IndexerMixin") {
+      id
+      url
+    }
+  }
+}

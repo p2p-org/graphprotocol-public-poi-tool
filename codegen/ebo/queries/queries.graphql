@@ -1,0 +1,11 @@
+query CurrentEpoch($network_id: ID!) {
+    network(id: $network_id) {
+        latestValidBlockNumber {
+            network {
+                id
+            }
+            epochNumber
+            blockNumber
+        }
+    }
+}
