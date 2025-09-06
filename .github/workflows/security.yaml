@@ -1,0 +1,22 @@
+name: Security Testing
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    - cron: "0 0 * * SAT"
+
+jobs:
+  sast:
+    uses: p2p-org/security-workflows/.github/workflows/sast.yaml@main
+    secrets: inherit
+  sca:
+    uses: p2p-org/security-workflows/.github/workflows/sca.yaml@main
+    secrets: inherit
+  security-quality-gate:
+    uses: p2p-org/security-workflows/.github/workflows/security-quality-gate.yaml@main
+    secrets: inherit
+    needs: [sast, sca]
+    with:
+      block: false
