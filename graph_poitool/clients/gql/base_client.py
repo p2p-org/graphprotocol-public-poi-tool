@@ -7,6 +7,7 @@ from pydantic_core import to_jsonable_python
 
 from .base_model import UNSET, Upload
 from .exceptions import (
+    GraphQlClientTransportError,
     GraphQLClientGraphQLMultiError,
     GraphQLClientHttpError,
     GraphQLClientInvalidResponseError,
@@ -66,9 +67,7 @@ class BaseClient:
 
     def get_data(self, response: httpx.Response) -> Dict[str, Any]:
         if not response.is_success:
-            raise GraphQLClientHttpError(
-                status_code=response.status_code, response=response
-            )
+            raise GraphQLClientHttpError(status_code=response.status_code, response=response)
 
         try:
             response_json = response.json()
@@ -84,30 +83,22 @@ class BaseClient:
         errors = response_json.get("errors")
 
         if errors:
-            raise GraphQLClientGraphQLMultiError.from_errors_dicts(
-                errors_dicts=errors, data=data
-            )
+            raise GraphQLClientGraphQLMultiError.from_errors_dicts(errors_dicts=errors, data=data)
 
         return cast(Dict[str, Any], data)
 
     def _process_variables(
         self, variables: Optional[Dict[str, Any]]
-    ) -> Tuple[
-        Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]
-    ]:
+    ) -> Tuple[Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]]:
         if not variables:
             return {}, {}, {}
 
         serializable_variables = self._convert_dict_to_json_serializable(variables)
         return self._get_files_from_variables(serializable_variables)
 
-    def _convert_dict_to_json_serializable(
-        self, dict_: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _convert_dict_to_json_serializable(self, dict_: Dict[str, Any]) -> Dict[str, Any]:
         return {
-            key: self._convert_value(value)
-            for key, value in dict_.items()
-            if value is not UNSET
+            key: self._convert_value(value) for key, value in dict_.items() if value is not UNSET
         }
 
     def _convert_value(self, value: Any) -> Any:
@@ -119,9 +110,7 @@ class BaseClient:
 
     def _get_files_from_variables(
         self, variables: Dict[str, Any]
-    ) -> Tuple[
-        Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]
-    ]:
+    ) -> Tuple[Dict[str, Any], Dict[str, Tuple[str, IO[bytes], str]], Dict[str, List[str]]]:
         files_map: Dict[str, List[str]] = {}
         files_list: List[Upload] = []
 
@@ -180,7 +169,10 @@ class BaseClient:
             "map": json.dumps(files_map, default=to_jsonable_python),
         }
 
-        return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
+        try:
+            return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
+        except httpx.RequestError as e:
+            raise GraphQlClientTransportError(message=e.message, request=e.request)
 
     def _execute_json(
         self,
@@ -195,15 +187,18 @@ class BaseClient:
         merged_kwargs: Dict[str, Any] = kwargs.copy()
         merged_kwargs["headers"] = headers
 
-        return self.http_client.post(
-            url=self.url,
-            content=json.dumps(
-                {
-                    "query": query,
-                    "operationName": operation_name,
-                    "variables": variables,
-                },
-                default=to_jsonable_python,
-            ),
-            **merged_kwargs,
-        )
+        try:
+            return self.http_client.post(
+                url=self.url,
+                content=json.dumps(
+                    {
+                        "query": query,
+                        "operationName": operation_name,
+                        "variables": variables,
+                    },
+                    default=to_jsonable_python,
+                ),
+                **merged_kwargs,
+            )
+        except httpx.RequestError as e:
+            raise GraphQlClientTransportError(message=e.message, request=e.request)

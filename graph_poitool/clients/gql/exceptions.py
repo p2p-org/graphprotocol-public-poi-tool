@@ -7,6 +7,15 @@ class GraphQLClientError(Exception):
     """Base exception."""
 
 
+class GraphQlClientTransportError(GraphQLClientError):
+    def __init__(self, message: str, request: httpx.Request) -> None:
+        self.message = message
+        self.request = request
+
+    def __str__(self) -> str:
+        return self.message
+
+
 class GraphQLClientHttpError(GraphQLClientError):
     def __init__(self, status_code: int, response: httpx.Response) -> None:
         self.status_code = status_code
