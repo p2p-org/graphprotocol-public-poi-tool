@@ -1,12 +1,3 @@
-def configure_logging():
-    pass
-
-
-def status_url(indexer):
-    indexer_url = indexer.url.rstrip("/")
-    return f"{indexer_url}/status"
-
-
 NETWORK_IDS = {
     "mainnet": "eip155:1",
     "goerli": "eip155:5",
@@ -35,7 +26,18 @@ NETWORK_IDS = {
 }
 
 
-def to_network_id(name):
+def to_network_id(name: str) -> str:
+    """Convert network name to EIP-155 chain ID format.
+    
+    Args:
+        name: Network name (e.g., 'mainnet', 'arbitrum-one', 'matic')
+        
+    Returns:
+        EIP-155 formatted chain ID (e.g., 'eip155:1', 'eip155:42161')
+        
+    Raises:
+        KeyError: If the network name is not recognized
+    """
     if name in NETWORK_IDS:
         return NETWORK_IDS[name]
     else:

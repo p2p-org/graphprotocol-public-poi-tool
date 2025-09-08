@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-poitool = 'graph_poitool.app:cli'
+poitool = 'graph_poitool.cli:cli'
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -24,3 +24,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 ariadne-codegen = "^0.14.0"
+jupyter = "^1.1.1"
