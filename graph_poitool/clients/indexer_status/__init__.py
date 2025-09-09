@@ -26,8 +26,17 @@ from .subgraph_status import (
     SubgraphStatus,
     SubgraphStatusIndexingStatuses,
     SubgraphStatusIndexingStatusesChains,
+    SubgraphStatusIndexingStatusesChainsChainHeadBlock,
     SubgraphStatusIndexingStatusesChainsLatestBlock,
     SubgraphStatusIndexingStatusesFatalError,
+)
+from .synced_subgraphs import (
+    SyncedSubgraphs,
+    SyncedSubgraphsIndexingStatuses,
+    SyncedSubgraphsIndexingStatusesChains,
+    SyncedSubgraphsIndexingStatusesChainsChainHeadBlock,
+    SyncedSubgraphsIndexingStatusesChainsLatestBlock,
+    SyncedSubgraphsIndexingStatusesFatalError,
 )
 
 __all__ = [
@@ -50,7 +59,14 @@ __all__ = [
     "SubgraphStatus",
     "SubgraphStatusIndexingStatuses",
     "SubgraphStatusIndexingStatusesChains",
+    "SubgraphStatusIndexingStatusesChainsChainHeadBlock",
     "SubgraphStatusIndexingStatusesChainsLatestBlock",
     "SubgraphStatusIndexingStatusesFatalError",
+    "SyncedSubgraphs",
+    "SyncedSubgraphsIndexingStatuses",
+    "SyncedSubgraphsIndexingStatusesChains",
+    "SyncedSubgraphsIndexingStatusesChainsChainHeadBlock",
+    "SyncedSubgraphsIndexingStatusesChainsLatestBlock",
+    "SyncedSubgraphsIndexingStatusesFatalError",
     "Upload",
 ]

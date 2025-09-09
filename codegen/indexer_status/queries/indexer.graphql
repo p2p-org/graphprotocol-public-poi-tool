@@ -11,6 +11,29 @@ query PublicPOI($deployment_id: String!, $block_number: BigInt!) {
   }
 }
 
+query SyncedSubgraphs {
+    indexingStatuses(subgraphs: []) @mixin(from: ".mixins", import: "LatestBlockMixin") {
+        subgraph
+        health
+        entityCount
+        fatalError {
+          message
+          deterministic
+        }
+        chains {
+            network
+            chainHeadBlock {
+                hash
+                number
+            }
+            latestBlock {
+                hash
+                number
+            }
+        }
+    }
+}
+
 query SubgraphStatus($deployment_id: String!) {
     indexingStatuses(subgraphs: [$deployment_id]) @mixin(from: ".mixins", import: "LatestBlockMixin") {
         subgraph
@@ -22,6 +45,10 @@ query SubgraphStatus($deployment_id: String!) {
         }
         chains {
             network
+            chainHeadBlock {
+                hash
+                number
+            }
             latestBlock {
                 hash
                 number
