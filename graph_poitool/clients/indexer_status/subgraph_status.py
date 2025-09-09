@@ -36,9 +36,17 @@ class SubgraphStatusIndexingStatusesChains(BaseModel):
         alias="__typename"
     )
     network: str
+    chain_head_block: Optional["SubgraphStatusIndexingStatusesChainsChainHeadBlock"] = (
+        Field(alias="chainHeadBlock")
+    )
     latest_block: Optional["SubgraphStatusIndexingStatusesChainsLatestBlock"] = Field(
         alias="latestBlock"
     )
+
+
+class SubgraphStatusIndexingStatusesChainsChainHeadBlock(BaseModel):
+    hash: Any
+    number: int
 
 
 class SubgraphStatusIndexingStatusesChainsLatestBlock(BaseModel):

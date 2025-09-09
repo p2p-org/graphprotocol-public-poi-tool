@@ -13,6 +13,7 @@ from .cached_ethereum_calls import (
 from .entity_changes import EntityChanges, EntityChangesEntityChangesInBlock
 from .public_poi import PublicPOI, PublicPOIPublicProofsOfIndexing
 from .subgraph_status import SubgraphStatus, SubgraphStatusIndexingStatuses
+from .synced_subgraphs import SyncedSubgraphs, SyncedSubgraphsIndexingStatuses
 
 
 def gql(q: str) -> str:
@@ -49,6 +50,41 @@ class IndexerStatusClient(BaseClient):
         data = self.get_data(response)
         return PublicPOI.model_validate(data).public_proofs_of_indexing
 
+    def synced_subgraphs(self, **kwargs: Any) -> List[SyncedSubgraphsIndexingStatuses]:
+        query = gql(
+            """
+            query SyncedSubgraphs {
+              indexingStatuses(subgraphs: []) {
+                subgraph
+                health
+                entityCount
+                fatalError {
+                  message
+                  deterministic
+                }
+                chains {
+                  __typename
+                  network
+                  chainHeadBlock {
+                    hash
+                    number
+                  }
+                  latestBlock {
+                    hash
+                    number
+                  }
+                }
+              }
+            }
+            """
+        )
+        variables: Dict[str, object] = {}
+        response = self.execute(
+            query=query, operation_name="SyncedSubgraphs", variables=variables, **kwargs
+        )
+        data = self.get_data(response)
+        return SyncedSubgraphs.model_validate(data).indexing_statuses
+
     def subgraph_status(
         self, deployment_id: str, **kwargs: Any
     ) -> List[SubgraphStatusIndexingStatuses]:
@@ -66,6 +102,10 @@ class IndexerStatusClient(BaseClient):
                 chains {
                   __typename
                   network
+                  chainHeadBlock {
+                    hash
+                    number
+                  }
                   latestBlock {
                     hash
                     number
