@@ -119,7 +119,7 @@ class ReportService:
             if not indexer_url:
                 yield ReportResult(
                     indexer_id,
-                    indexer_url,
+                    "",
                     status="failure",
                     health="unknown",
                     error="Indexer has no URL",
@@ -130,7 +130,11 @@ class ReportService:
             try:
                 status = client.subgraph_status(deployment_id)[0]
 
-                if poi and status.latest_block_number > poi_block_number:
+                if (
+                    poi
+                    and status.latest_block_number
+                    and status.latest_block_number > poi_block_number
+                ):
                     public_poi_resp = client.public_poi(deployment_id, poi_block_number)[0]
                     public_poi = public_poi_resp.proof_of_indexing
                 else:

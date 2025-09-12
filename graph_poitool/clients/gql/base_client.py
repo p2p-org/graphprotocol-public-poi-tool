@@ -172,7 +172,7 @@ class BaseClient:
         try:
             return self.http_client.post(url=self.url, data=data, files=files, **kwargs)
         except httpx.RequestError as e:
-            raise GraphQlClientTransportError(message=e.message, request=e.request)
+            raise GraphQlClientTransportError(message=str(e), request=e.request) from e
 
     def _execute_json(
         self,
@@ -201,4 +201,4 @@ class BaseClient:
                 **merged_kwargs,
             )
         except httpx.RequestError as e:
-            raise GraphQlClientTransportError(message=e.message, request=e.request)
+            raise GraphQlClientTransportError(message=str(e), request=e.request) from e

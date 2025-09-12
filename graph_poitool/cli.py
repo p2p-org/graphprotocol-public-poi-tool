@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from functools import partial
+from typing import IO, Any
 import hashlib
 
+from graph_poitool.clients.gql import GraphQLClientError
 from graph_poitool.clients.network import NetworkClient
 from graph_poitool.clients.ebo import EBOClient
 from graph_poitool.services.report import ReportService
@@ -30,6 +32,7 @@ class PoiToolsContext:
     ebo: EBOClient
     reporter: ReportService
     bisector: BisectorService
+    console: Console
 
 
 @click.group()
@@ -46,7 +49,9 @@ def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint):
     ebo = EBOClient(ebo_subgraph_endpoint)
     reporter = ReportService(network, ebo)
     bisector = BisectorService(network)
-    ctx.obj = PoiToolsContext(network=network, ebo=ebo, reporter=reporter, bisector=bisector)
+    ctx.obj = PoiToolsContext(
+        network=network, ebo=ebo, reporter=reporter, bisector=bisector, console=Console()
+    )
 
 
 def report_progress_callback(progress: Progress, task, allocation, indexer, total):
@@ -208,8 +213,19 @@ def bisect(ctx, deployment_id, left_id, right_id):
         left_id: ID of the first indexer for comparison
         right_id: ID of the second indexer for comparison
     """
-    left = ctx.obj.network.indexer(left_id).client
-    right = ctx.obj.network.indexer(right_id).client
+    try:
+        left = ctx.obj.network.indexer(left_id).client
+    except GraphQLClientError as e:
+        raise click.ClickException(
+            f"Unable to get indexer client for indexer {left_id}: {e}"
+        ) from e
+
+    try:
+        right = ctx.obj.network.indexer(right_id).client
+    except GraphQLClientError as e:
+        raise click.ClickException(
+            f"Unable to get indexer client for indexer {right_id}: {e}"
+        ) from e
 
     with Progress() as progress:
         task = progress.add_task("Finding last matching block...", total=None)
@@ -235,16 +251,19 @@ def indexer():
 @click.argument("INDEXER_ID")
 def hash(ctx, indexer_id):
     """Generate a hash of an indexer's synced subgraphs.
-    
-    Creates a SHA-256 hash based on all synced subgraphs and their
-    health status for the specified indexer. Useful for comparing
-    indexer states or detecting changes over time.
-    
+
+    Creates a SHA-256 hash based on all synced subgraph IDs and their
+    health status for the specified indexer. Useful for finding indexers
+    sharing graph-nodes.
+
     Args:
         indexer_id: The indexer ID to generate hash for
     """
-    indexer = ctx.obj.network.indexer(indexer_id).client
-    synced_subgraphs = indexer.synced_subgraphs(timeout=60)
+    try:
+        indexer = ctx.obj.network.indexer(indexer_id).client
+        synced_subgraphs = indexer.synced_subgraphs(timeout=60)
+    except GraphQLClientError as e:
+        raise click.ClickException(f"Unable to get indexing statuses: {e}") from e
 
     sgds = [f"{sgd.subgraph}:{sgd.health}" for sgd in synced_subgraphs]
     sgds.sort()

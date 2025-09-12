@@ -4,7 +4,11 @@ from typing import Optional, Callable, Literal
 
 from graph_poitool.clients.network import NetworkClient, Manifest
 from graph_poitool.clients.indexer_status import IndexerStatusClient
-from graph_poitool.services.bisect.exceptions import ManifestNotFoundError, SyncStatusNotFoundError
+from graph_poitool.services.bisect.exceptions import (
+    ManifestNotFoundError,
+    SyncStatusNotFoundError,
+    InvalidManifestError,
+)
 
 
 @dataclass
@@ -58,7 +62,10 @@ class BisectorService:
         Returns:
             Starting block number from the manifest
         """
-        return self.sgd_manifest(deployment_id).start_block
+        manifest = self.sgd_manifest(deployment_id)
+        if manifest.start_block is None:
+            raise InvalidManifestError(f"Start block missing in manifest for {deployment_id}")
+        return manifest.start_block
 
     def sgd_common_latest_block(self, deployment_id, left, right) -> int:
         """Find the common latest block between two indexers.
