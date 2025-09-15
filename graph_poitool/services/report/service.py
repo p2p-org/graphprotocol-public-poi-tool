@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 from typing import Literal, Optional, Callable
-from enum import Enum
 from graph_poitool.clients.gql import GraphQLClientError
 from graph_poitool.clients.network import NetworkClient
 from graph_poitool.clients.ebo import EBOClient
 from graph_poitool.services.report.exceptions import (
-    ReportServiceInvalidSubgraphError,
     ReportServiceEBORequiredError,
 )
 from graph_poitool.utils import to_network_id

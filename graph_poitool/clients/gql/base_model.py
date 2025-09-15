@@ -2,7 +2,6 @@
 
 from io import IOBase
 
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict
 
 
 class UnsetType:

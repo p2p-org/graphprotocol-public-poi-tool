@@ -13,7 +13,7 @@ A command-line tool for analyzing and reporting on Proof of Indexing (POI) data 
 
 ### Prerequisites
 
-- Python 3.11 or higher
+- Python 3.10 or higher
 - Poetry (for dependency management)
 
 ### Install from source
@@ -41,7 +41,7 @@ export POITOOL_GATEWAY_API_TOKEN="secret" # optional if not pointing to gateway
 Generate a health report for a subgraph deployment:
 
 ```bash
-poitool health <DEPLOYMENT_ID>
+poitool health <IPFS_HASH>
 ```
 
 This command:
