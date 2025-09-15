@@ -22,4 +22,5 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "ariadne-codegen>=0.14.0,<0.15",
+    "ruff>=0.13.0",
 ]

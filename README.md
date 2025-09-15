@@ -14,14 +14,14 @@ A command-line tool for analyzing and reporting on Proof of Indexing (POI) data 
 ### Prerequisites
 
 - Python 3.10 or higher
-- Poetry (for dependency management)
+- uv (for dependency management)
 
 ### Install from source
 
 ```bash
 git clone https://github.com/graphprotocol/graphprotocol-public-poi-tool.git
 cd graphprotocol-public-poi-tool
-poetry install
+uv sync
 ```
 
 ## Configuration
@@ -138,7 +138,7 @@ Generate SHA-256 hash of indexer's synced subgraphs and their health status.
 ### Setup Development Environment
 
 ```bash
-poetry install
+uv sync
 ```
 
 ### Code Generation
