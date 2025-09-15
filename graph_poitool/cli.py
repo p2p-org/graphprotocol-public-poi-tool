@@ -21,13 +21,14 @@ import click
 @dataclass
 class PoiToolsContext:
     """Context object for CLI commands containing initialized clients and services.
-    
+
     Attributes:
         network: Network subgraph client
         ebo: EBO (Epoch Block Oracle) client
         reporter: Report generation service
         bisector: POI bisection service
     """
+
     network: NetworkClient
     ebo: EBOClient
     reporter: ReportService
@@ -38,15 +39,20 @@ class PoiToolsContext:
 @click.group()
 @click.option("--network-subgraph-endpoint", envvar="POITOOL_NETWORK_SUBGRAPH_ENDPOINT")
 @click.option("--ebo-subgraph-endpoint", envvar="POITOOL_EBO_SUBGRAPH_ENDPOINT")
+@click.option("--gateway-api-token", envvar="POITOOL_GATEWAY_API_TOKEN", default=None)
 @click.pass_context
-def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint):
+def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint, gateway_api_token):
     """POI Tools CLI for subgraph deployment analysis and reporting.
-    
+
     Initializes network and EBO clients along with reporting services.
     Endpoints can be provided via command line options or environment variables.
     """
-    network = NetworkClient(network_subgraph_endpoint)
-    ebo = EBOClient(ebo_subgraph_endpoint)
+    headers = {}
+    if gateway_api_token:
+        headers.update({"authorization": f"Bearer {gateway_api_token}"})
+
+    network = NetworkClient(network_subgraph_endpoint, headers=headers)
+    ebo = EBOClient(ebo_subgraph_endpoint, headers=headers)
     reporter = ReportService(network, ebo)
     bisector = BisectorService(network)
     ctx.obj = PoiToolsContext(
@@ -56,9 +62,9 @@ def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint):
 
 def report_progress_callback(progress: Progress, task, allocation, indexer, total):
     """Progress callback for report generation.
-    
+
     Updates the progress display with current indexer being queried.
-    
+
     Args:
         progress: Rich Progress instance
         task: Progress task ID
@@ -74,10 +80,10 @@ def report_progress_callback(progress: Progress, task, allocation, indexer, tota
 @click.pass_context
 def health(ctx, deployment_id):
     """Generate health report for a subgraph deployment.
-    
+
     Queries all indexers with allocations to the deployment and displays
     their health status, latest block, and any errors in a table format.
-    
+
     Args:
         deployment_id: The subgraph deployment ID to report on
     """
@@ -129,11 +135,11 @@ def poi():
 @click.pass_context
 def report(ctx, deployment_id, block_number):
     """Generate POI report for a subgraph deployment at a specific block.
-    
+
     Collects proof-of-indexing values from all indexers with allocations
     to the deployment. If no block number is specified, uses the latest
     valid block from the current epoch.
-    
+
     Args:
         deployment_id: The subgraph deployment ID
         block_number: Optional block number (defaults to current epoch's latest valid block)
@@ -182,10 +188,10 @@ def report(ctx, deployment_id, block_number):
 
 def bisect_progress_callback(progress, task, lo, mid, hi):
     """Progress callback for bisection operation.
-    
+
     Updates the progress display with current block being checked and
     remaining blocks in the bisection range.
-    
+
     Args:
         progress: Rich Progress instance
         task: Progress task ID
@@ -203,11 +209,11 @@ def bisect_progress_callback(progress, task, lo, mid, hi):
 @click.pass_context
 def bisect(ctx, deployment_id, left_id, right_id):
     """Find the first block where two indexers' POIs diverge.
-    
+
     Uses binary search to efficiently locate the exact block number
     where proof-of-indexing values first become different between
     two specified indexers.
-    
+
     Args:
         deployment_id: The subgraph deployment ID
         left_id: ID of the first indexer for comparison

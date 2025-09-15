@@ -3,7 +3,7 @@ name = "graph-poitool"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "P2P.ORG",email = "devops.graph@p2p.org"}
+    {name = "P2P.ORG"}
 ]
 readme = "README.md"
 requires-python = ">=3.11,<4"

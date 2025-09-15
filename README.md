@@ -7,7 +7,7 @@ A command-line tool for analyzing and reporting on Proof of Indexing (POI) data 
 - **Health Reports**: Generate comprehensive health reports for subgraph deployments across all allocated indexers
 - **POI Analysis**: Compare proof-of-indexing values between indexers at specific block numbers
 - **Bisection Analysis**: Efficiently find the exact block where two indexers' POI values first diverge
-- **Indexer Hashing**: Generate hashes of indexer states for finding indexers sharing graph-node
+- **Indexer State Hash**: Generate hashes of indexer states for finding indexers sharing graph-node
 
 ## Installation
 
@@ -29,8 +29,9 @@ poetry install
 The tool requires access to Graph Protocol subgraph endpoints. Configure these via environment variables or command-line options:
 
 ```bash
-export POITOOL_NETWORK_SUBGRAPH_ENDPOINT="https://gateway.network.thegraph.com/api/[api-key]/subgraphs/id/..."
-export POITOOL_EBO_SUBGRAPH_ENDPOINT="https://gateway.network.thegraph.com/api/[api-key]/subgraphs/id/..."
+export POITOOL_NETWORK_SUBGRAPH_ENDPOINT="https://gateway.network.thegraph.com/api/subgraphs/id/..."
+export POITOOL_EBO_SUBGRAPH_ENDPOINT="https://gateway.network.thegraph.com/api/subgraphs/id/..."
+export POITOOL_GATEWAY_API_TOKEN="secret" # optional if not pointing to gateway
 ```
 
 ## Usage
@@ -54,10 +55,10 @@ Generate POI reports for specific blocks:
 
 ```bash
 # Use current epoch's latest valid block
-poitool poi report <DEPLOYMENT_ID>
+poitool poi report <IPFS_HASH>
 
 # Use specific block number
-poitool poi report <DEPLOYMENT_ID> <BLOCK_NUMBER>
+poitool poi report <IPFS_HASH> <BLOCK_NUMBER>
 ```
 
 Features:
@@ -70,12 +71,12 @@ Features:
 Find the exact block where two indexers' POI values diverge:
 
 ```bash
-poitool poi bisect <DEPLOYMENT_ID> <LEFT_INDEXER_ID> <RIGHT_INDEXER_ID>
+poitool poi bisect <IPFS_HASH> <LEFT_INDEXER_ID> <RIGHT_INDEXER_ID>
 ```
 
 This uses binary search to efficiently locate divergence points, useful for:
 - Debugging indexing discrepancies
-- Identifying when indexers went out of sync
+- Identifying when indexers went out of agreement
 - Root cause analysis of POI mismatches
 
 ### Indexer State Hashing
@@ -116,16 +117,17 @@ Useful for:
 
 - `--network-subgraph-endpoint`: Graph Network subgraph endpoint
 - `--ebo-subgraph-endpoint`: EBO subgraph endpoint
+- `--gateway-api-token`: Graph Gateway API token
 
 ### Commands
 
-#### `health <DEPLOYMENT_ID>`
+#### `health <IPFS_HASH>`
 Generate health report for a subgraph deployment.
 
-#### `poi report <DEPLOYMENT_ID> [BLOCK_NUMBER]`
+#### `poi report <IPFS_HASH> [BLOCK_NUMBER]`
 Generate POI report. Block number defaults to current epoch's latest valid block.
 
-#### `poi bisect <DEPLOYMENT_ID> <LEFT_ID> <RIGHT_ID>`
+#### `poi bisect <IPFS_HASH> <LEFT_INDEXER_ID> <RIGHT_INDEXER_ID>`
 Find first divergent block between two indexers using binary search.
 
 #### `indexer hash <INDEXER_ID>`
@@ -137,7 +139,6 @@ Generate SHA-256 hash of indexer's synced subgraphs and their health status.
 
 ```bash
 poetry install
-poetry shell
 ```
 
 ### Code Generation
@@ -165,9 +166,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For issues and questions:
 - Open an issue on GitHub
 - Check existing documentation and code comments
-
-## Related Projects
-
-- [Graph Protocol](https://thegraph.com/)
-- [Graph Network Subgraph](https://github.com/graphprotocol/graph-network-subgraph)
-- [Indexer Tools](https://github.com/graphprotocol/indexer)
