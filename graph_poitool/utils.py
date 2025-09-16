@@ -1,3 +1,26 @@
+from click import ParamType
+
+
+class IndexerAddress(ParamType):
+    name = "indexer_address"
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, str) and value[:2].lower() == "0x" and len(value) == 42:
+            return value
+        else:
+            self.fail(f"{value!r} is not a valid indexer address", param, ctx)
+
+
+class IPFSHash(ParamType):
+    name = "ipfs_hash"
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, str) and value[:2] == "Qm" and len(value) == 46:
+            return value
+        else:
+            self.fail(f"{value!r} is not a valid IPFS hash", param, ctx)
+
+
 NETWORK_IDS = {
     "mainnet": "eip155:1",
     "goerli": "eip155:5",
@@ -28,13 +51,13 @@ NETWORK_IDS = {
 
 def to_network_id(name: str) -> str:
     """Convert network name to EIP-155 chain ID format.
-    
+
     Args:
         name: Network name (e.g., 'mainnet', 'arbitrum-one', 'matic')
-        
+
     Returns:
         EIP-155 formatted chain ID (e.g., 'eip155:1', 'eip155:42161')
-        
+
     Raises:
         KeyError: If the network name is not recognized
     """

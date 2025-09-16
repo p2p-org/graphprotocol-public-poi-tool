@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from functools import partial
-from typing import IO, Any
 import hashlib
 
 from graph_poitool.clients.gql import GraphQLClientError
@@ -8,10 +7,11 @@ from graph_poitool.clients.network import NetworkClient
 from graph_poitool.clients.ebo import EBOClient
 from graph_poitool.services.report import ReportService
 from graph_poitool.services.bisect import BisectorService
+from graph_poitool.utils import IndexerAddress, IPFSHash
 
 from rich.console import Console
 from rich.table import Table
-from rich.progress import track, Progress
+from rich.progress import Progress
 from rich.live import Live
 
 
@@ -21,13 +21,14 @@ import click
 @dataclass
 class PoiToolsContext:
     """Context object for CLI commands containing initialized clients and services.
-    
+
     Attributes:
         network: Network subgraph client
         ebo: EBO (Epoch Block Oracle) client
         reporter: Report generation service
         bisector: POI bisection service
     """
+
     network: NetworkClient
     ebo: EBOClient
     reporter: ReportService
@@ -38,15 +39,20 @@ class PoiToolsContext:
 @click.group()
 @click.option("--network-subgraph-endpoint", envvar="POITOOL_NETWORK_SUBGRAPH_ENDPOINT")
 @click.option("--ebo-subgraph-endpoint", envvar="POITOOL_EBO_SUBGRAPH_ENDPOINT")
+@click.option("--gateway-api-token", envvar="POITOOL_GATEWAY_API_TOKEN", default=None)
 @click.pass_context
-def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint):
+def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint, gateway_api_token):
     """POI Tools CLI for subgraph deployment analysis and reporting.
-    
+
     Initializes network and EBO clients along with reporting services.
     Endpoints can be provided via command line options or environment variables.
     """
-    network = NetworkClient(network_subgraph_endpoint)
-    ebo = EBOClient(ebo_subgraph_endpoint)
+    headers = {}
+    if gateway_api_token:
+        headers.update({"authorization": f"Bearer {gateway_api_token}"})
+
+    network = NetworkClient(network_subgraph_endpoint, headers=headers)
+    ebo = EBOClient(ebo_subgraph_endpoint, headers=headers)
     reporter = ReportService(network, ebo)
     bisector = BisectorService(network)
     ctx.obj = PoiToolsContext(
@@ -56,9 +62,9 @@ def cli(ctx, network_subgraph_endpoint, ebo_subgraph_endpoint):
 
 def report_progress_callback(progress: Progress, task, allocation, indexer, total):
     """Progress callback for report generation.
-    
+
     Updates the progress display with current indexer being queried.
-    
+
     Args:
         progress: Rich Progress instance
         task: Progress task ID
@@ -70,20 +76,20 @@ def report_progress_callback(progress: Progress, task, allocation, indexer, tota
 
 
 @cli.command()
-@click.argument("DEPLOYMENT_ID")
+@click.argument("IPFS_HASH", type=IPFSHash())
 @click.pass_context
-def health(ctx, deployment_id):
+def health(ctx, ipfs_hash):
     """Generate health report for a subgraph deployment.
-    
+
     Queries all indexers with allocations to the deployment and displays
     their health status, latest block, and any errors in a table format.
-    
+
     Args:
-        deployment_id: The subgraph deployment ID to report on
+        ipfs_hash: The subgraph deployment ID to report on
     """
     """Buiild a health report for Subgraph Deploymment."""
 
-    table = Table(title=f"Health Report for {deployment_id}")
+    table = Table(title=f"Health Report for {ipfs_hash}")
     table.add_column("Indexer ID")
     table.add_column("Indexer URL")
     table.add_column("Status")
@@ -91,13 +97,13 @@ def health(ctx, deployment_id):
     table.add_column("Deterministic Error")
     table.add_column("Error")
 
-    with Live(table, refresh_per_second=4) as live:
+    with Live(table, refresh_per_second=4):
         with Progress(transient=True) as progress:
             task = progress.add_task("Querying indexers...", total=None)
             progress_callback = partial(report_progress_callback, progress, task)
 
             for result in ctx.obj.reporter.report(
-                deployment_id, poi=False, progress_callback=progress_callback
+                ipfs_hash, poi=False, progress_callback=progress_callback
             ):
                 # Convert types because rich refuses to display bools
                 if result.error_deterministic is None:
@@ -124,18 +130,18 @@ def poi():
 
 
 @poi.command()
-@click.argument("DEPLOYMENT_ID")
+@click.argument("IPFS_HASH", type=IPFSHash())
 @click.argument("BLOCK_NUMBER", required=False, type=int)
 @click.pass_context
-def report(ctx, deployment_id, block_number):
+def report(ctx, ipfs_hash, block_number):
     """Generate POI report for a subgraph deployment at a specific block.
-    
+
     Collects proof-of-indexing values from all indexers with allocations
     to the deployment. If no block number is specified, uses the latest
     valid block from the current epoch.
-    
+
     Args:
-        deployment_id: The subgraph deployment ID
+        ipfs_hash: The subgraph deployment ID
         block_number: Optional block number (defaults to current epoch's latest valid block)
     """
     """Build Public POI report for Subgraph Deployment.
@@ -143,21 +149,21 @@ def report(ctx, deployment_id, block_number):
     """
 
     if not block_number:
-        block_number = ctx.obj.reporter.sgd_latest_valid_block_number(deployment_id)
+        block_number = ctx.obj.reporter.sgd_latest_valid_block_number(ipfs_hash)
 
-    table = Table(title=f"POI Report for {deployment_id} at block {block_number}")
+    table = Table(title=f"POI Report for {ipfs_hash} at block {block_number}")
     table.add_column("Indexer ID")
     table.add_column("Indexer URL")
     table.add_column("Latest Block")
     table.add_column("Public POI")
 
-    with Live(table, refresh_per_second=4) as live:
+    with Live(table, refresh_per_second=4):
         with Progress(transient=True) as progress:
             task = progress.add_task("Querying indexers...", total=None)
             progress_callback = partial(report_progress_callback, progress, task)
 
             for result in ctx.obj.reporter.report(
-                deployment_id,
+                ipfs_hash,
                 poi=True,
                 poi_block_number=block_number,
                 progress_callback=progress_callback,
@@ -182,10 +188,10 @@ def report(ctx, deployment_id, block_number):
 
 def bisect_progress_callback(progress, task, lo, mid, hi):
     """Progress callback for bisection operation.
-    
+
     Updates the progress display with current block being checked and
     remaining blocks in the bisection range.
-    
+
     Args:
         progress: Rich Progress instance
         task: Progress task ID
@@ -197,19 +203,19 @@ def bisect_progress_callback(progress, task, lo, mid, hi):
 
 
 @poi.command()
-@click.argument("DEPLOYMENT_ID")
-@click.argument("LEFT_ID")
-@click.argument("RIGHT_ID")
+@click.argument("IPFS_HASH", type=IPFSHash())
+@click.argument("LEFT_ID", type=IndexerAddress())
+@click.argument("RIGHT_ID", type=IndexerAddress())
 @click.pass_context
-def bisect(ctx, deployment_id, left_id, right_id):
+def bisect(ctx, ipfs_hash, left_id, right_id):
     """Find the first block where two indexers' POIs diverge.
-    
+
     Uses binary search to efficiently locate the exact block number
     where proof-of-indexing values first become different between
     two specified indexers.
-    
+
     Args:
-        deployment_id: The subgraph deployment ID
+        ipfs_hash: The subgraph deployment ID
         left_id: ID of the first indexer for comparison
         right_id: ID of the second indexer for comparison
     """
@@ -231,7 +237,7 @@ def bisect(ctx, deployment_id, left_id, right_id):
         task = progress.add_task("Finding last matching block...", total=None)
         progress_callback = partial(bisect_progress_callback, progress, task)
         result = ctx.obj.bisector.bisect(
-            deployment_id, left, right, progress_callback=progress_callback
+            ipfs_hash, left, right, progress_callback=progress_callback
         )
 
     if result.message:
@@ -248,7 +254,7 @@ def indexer():
 
 @indexer.command()
 @click.pass_context
-@click.argument("INDEXER_ID")
+@click.argument("INDEXER_ID", type=IndexerAddress())
 def hash(ctx, indexer_id):
     """Generate a hash of an indexer's synced subgraphs.
 
