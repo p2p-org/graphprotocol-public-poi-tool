@@ -14,7 +14,17 @@ ebo_client:
 	poetry run ariadne-codegen --config codegen/ebo/config.toml client
 	uv run ruff check --fix graph_poitool/clients/ebo
 
-clean:
+codegen_clean:
 	rm -rf graph_poitools/clients/network
 	rm -rf graph_poitools/clients/indexer_status
 	rm -rf graph_poitools/clients/ebo
+
+clean:
+	rm -rf dist
+
+build:
+	uv build --wheel
+
+publish:
+	uv publish
+

@@ -14,7 +14,11 @@ A command-line tool for analyzing and reporting on Proof of Indexing (POI) data 
 ### Prerequisites
 
 - Python 3.10 or higher
-- uv (for dependency management)
+
+### Install from PyPI
+```bash
+pip install graph-poitool
+```
 
 ### Install from source
 
