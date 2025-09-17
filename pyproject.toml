@@ -1,10 +1,10 @@
 [project]
 name = "graph-poitool"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
 authors = [{ name = "P2P.ORG" }]
 license = "MIT"
-requires-python = ">=3.11,<4"
+requires-python = ">=3.10,<4"
 readme = "README.md"
 dependencies = [
     "httpx (>=0.28.1,<0.29.0)",
