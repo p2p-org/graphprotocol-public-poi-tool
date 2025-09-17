@@ -1,6 +1,6 @@
 [project]
 name = "graph-poitool"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = [{ name = "P2P.ORG" }]
 license = "MIT"
